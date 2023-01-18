@@ -70,8 +70,7 @@ class NgramModel(object):
     def update(self, text: str):
         ''' Updates the model n-grams based on text '''
         text_list = []
-        for i in range(self.__context):
-            text_list.append('~')
+        text_list.append(start_pad(self.__context))
         for char in range(len(text)):
             self.__vocab.update(text[char])
             text_list.append(text[char])
@@ -125,6 +124,34 @@ class NgramModel(object):
     def random_text(self, length):
         ''' Returns text of the specified character length based on the
             n-grams learned by this model '''
+        probable_string = ""
+        starting_context = start_pad(self.__context)
+        while len(probable_string) < length:
+            if len(probable_string) == 0:
+                char = self.random_char(starting_context)
+                probable_string += char
+            else:
+                updated_context = len(probable_string) - self.__context
+                char = self.random_char(probable_string[updated_context:])
+                probable_string += char
+
+        return probable_string
+
+    # def random_text(self, length):
+    #     ''' Returns text of the specified character length based on the
+    #         n-grams learned by this model '''
+    #     initial_context = start_pad(self.__c)
+    #     random_string = ""
+    #     while len(random_string) < length:
+    #         if len(random_string) == 0:
+    #             char = self.random_char(initial_context)
+    #             random_string = random_string + char
+    #         else:
+    #             context = random_string[len(random_string) - self.__c:]
+    #             char = self.random_char(context)
+    #             random_string = random_string + char
+    #     return random_string
+
 
 
     def perplexity(self, text):
@@ -182,6 +209,6 @@ if __name__ == "__main__":
     n.update('abcd')
     random.seed(1)
     print([n.random_char('') for i in range(25)])
-    # print(m.random_text(25))
+    print(m.random_text(10))
     # n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 6, 0)
     # print(n.random_text(250))
