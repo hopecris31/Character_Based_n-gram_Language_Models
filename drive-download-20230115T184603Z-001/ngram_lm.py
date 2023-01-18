@@ -24,6 +24,7 @@ def ngrams(c, text):
     # start index is c, the amount of characters we are going to consider in the model
     # tuple contains the words that cone before word to find, and word to find, each char separated by a comma
     # returns a list of tuples
+
     pass
 
 
@@ -89,16 +90,12 @@ class NgramModel(object):
     def prob(self, context: str, char: str):
         ''' Returns the probability of char appearing after context '''
         ngram = context + char
-        if context and char in self.__vocab:
-            ngram_occurrences = self.__ngrams.get(ngram)
-            ngram_occurrences_start_with_context = self.__get_ngram_count_with_first_context(context)
-            try:
-                return ngram_occurrences / ngram_occurrences_start_with_context
-            except Exception:
-                return 0.0
-        else:
-            # print(len(self.__vocab))
+        ngram_occurrences = self.__ngrams.get(ngram, 0)
+        ngram_occurrences_start_with_context = self.__get_ngram_count_with_first_context(context)
+        if ngram_occurrences_start_with_context == 0:
             return 1 / len(self.__vocab)
+        else:
+            return ngram_occurrences / ngram_occurrences_start_with_context
 
     def __get_ngram_count_with_first_context(self, context: str):
         '''get count of ngrams that start with char '''
@@ -116,7 +113,7 @@ class NgramModel(object):
         random_num = random.random()
         probability = 0
         i = 0
-        while probability <= random_num and i < len(sorted_vocab):
+        while probability < random_num and i < len(sorted_vocab):
             probability += self.prob(context, sorted_vocab[i])
             i += 1
         return sorted_vocab[i - 1]
@@ -131,26 +128,11 @@ class NgramModel(object):
                 char = self.random_char(starting_context)
                 probable_string += char
             else:
-                updated_context = len(probable_string) - self.__context
-                char = self.random_char(probable_string[updated_context:])
+                updated_context = probable_string[-self.__context]
+                char = self.random_char(updated_context)
                 probable_string += char
 
         return probable_string
-
-    # def random_text(self, length):
-    #     ''' Returns text of the specified character length based on the
-    #         n-grams learned by this model '''
-    #     initial_context = start_pad(self.__c)
-    #     random_string = ""
-    #     while len(random_string) < length:
-    #         if len(random_string) == 0:
-    #             char = self.random_char(initial_context)
-    #             random_string = random_string + char
-    #         else:
-    #             context = random_string[len(random_string) - self.__c:]
-    #             char = self.random_char(context)
-    #             random_string = random_string + char
-    #     return random_string
 
 
 
@@ -203,12 +185,8 @@ if __name__ == "__main__":
     print(m.prob('~', 'c'))
     print(m.prob('b', 'c'))
     print('_____')
-
-    n = NgramModel(0, 0)
-    n.update('abab')
-    n.update('abcd')
     random.seed(1)
-    print([n.random_char('') for i in range(25)])
-    print(m.random_text(10))
-    # n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 6, 0)
+    print([m.random_char('') for i in range(25)])
+    print(m.random_text(20))
+    n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 2)
     # print(n.random_text(250))
