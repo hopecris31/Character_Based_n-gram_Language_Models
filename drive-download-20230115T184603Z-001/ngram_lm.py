@@ -2,7 +2,7 @@ import math, random
 
 
 # Hope Crisafi
-# Natural Language Procesing Project 1
+# Natural Language Processing Project 1
 # n-gram models
 
 ################################################################################
@@ -80,7 +80,6 @@ class NgramModel(object):
                 self.__ngrams[n_gram] = 1'''
         for char in text:
             self.__vocab.update(char)
-        #print(text_list)
         ngrams_list = ngrams(self.__context, text)
         for ngram in ngrams_list:
             if ngram in self.__ngrams.keys():
@@ -89,7 +88,6 @@ class NgramModel(object):
                 self.__ngrams[ngram] = 1
         for ngram in self.__ngrams:
             self.__ngrams[ngram] += self.__k
-        #print(self.__ngrams)
 
     def prob(self, context, char):
         ''' Returns the probability of char appearing after context '''
@@ -216,17 +214,17 @@ class NgramModelWithInterpolation(NgramModel):
 
 
 if __name__ == "__main__":
-    #m = NgramModel(1, 0)
-    #m.update('abab')
+    m = NgramModel(1, 0)
+    m.update('abab')
     #print(m.get_vocab())
     #m.update('abcd')
     #print(m.get_vocab())
     #print(m.prob('a', 'b'))
     #print(m.prob('~', 'c'))
     #print(m.prob('b', 'c'))
-    #random.seed(1)
-    #print([m.random_char('') for i in range(25)])
-    #print(m.random_text(25))
-    n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 3, 0)
+    random.seed(1)
+    print([m.random_char('') for i in range(25)])
+    print(m.random_text(25))
+    n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 4)
     print(n.random_text(250))
     #print(m.perplexity('abcd'))
