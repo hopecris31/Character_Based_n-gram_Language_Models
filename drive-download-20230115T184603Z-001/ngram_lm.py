@@ -58,7 +58,7 @@ class NgramModel(object):
     ''' A basic n-gram model using add-k smoothing '''
 
     def __init__(self, c, k=0):
-        self.__context = c
+        self.__c = c
         self.__k = k
         self.__vocab = set()
         self.__ngrams = {}
@@ -68,26 +68,15 @@ class NgramModel(object):
         return self.__vocab
 
     def update(self, text: str):
-        ''' Updates the model n-grams based on text
-        ngram_list = ngrams(self.__context, text)
-        for char in text:
-            if char not in self.__vocab:
-                self.__vocab.update(char)
-        for n_gram in ngram_list:
-            if n_gram in self.__ngrams:
-                self.__ngrams[n_gram] += 1
-            else:
-                self.__ngrams[n_gram] = 1'''
+        ''' Updates the model n-grams based on text'''
         for char in text:
             self.__vocab.update(char)
-        ngrams_list = ngrams(self.__context, text)
+        ngrams_list = ngrams(self.__c, text)
         for ngram in ngrams_list:
-            if ngram in self.__ngrams.keys():
+            if ngram in self.__ngrams:
                 self.__ngrams[ngram] += 1
             else:
                 self.__ngrams[ngram] = 1
-        for ngram in self.__ngrams:
-            self.__ngrams[ngram] += self.__k
 
     def prob(self, context, char):
         ''' Returns the probability of char appearing after context '''
@@ -95,10 +84,13 @@ class NgramModel(object):
         ngram_occurrences_start_with_context = self.__get_ngram_count_with_first_context(context)
         ngram_occurrences = 0
         if ngram_occurrences_start_with_context != 0:
-            if ngram in self.__ngrams.keys():
+            if ngram in self.__ngrams:
                 ngram_occurrences = self.__ngrams[ngram]
-            return ngram_occurrences / ngram_occurrences_start_with_context
+            return (ngram_occurrences + self.__k) / (ngram_occurrences_start_with_context + self.__k)
         return 1 / len(self.__vocab)
+
+    def set_k(self, k):
+        self.__k = k
 
     def __get_ngram_count_with_first_context(self, context):
         '''get count of ngrams that start with char '''
@@ -123,23 +115,24 @@ class NgramModel(object):
     def random_text(self, length):
         ''' Returns text of the specified character length based on the
             n-grams learned by this model '''
-        probable_string = start_pad(self.__context)
+        probable_string = start_pad(self.__c)
         for i in range(length):
-            updated_context = probable_string[-self.__context:]
+            updated_context = probable_string[-self.__c:]
             probable_string += self.random_char(updated_context)
-        return probable_string[self.__context:]
+        return probable_string[self.__c:]
 
     def perplexity(self, text):
         ''' Returns the perplexity of text based on the n-grams learned by
             this model '''
-        ngram_list = ngrams(self.__context, text)
-        probability = 0
-        for ngram in ngram_list:
+        n_grams = ngrams(self.__c, text)
+        total_probability = 0
+        for ngram in n_grams:
             prob = self.prob(ngram[0], ngram[1])
             if prob == 0:
                 return float('inf')
-            probability += math.log(prob)
-        return math.exp(-(1 / len(text)) * probability)
+            total_probability += math.log(prob)
+        perplexity = math.exp(-(1 / len(text)) * total_probability)
+        return perplexity
 
 
 
@@ -151,33 +144,38 @@ class NgramModelWithInterpolation(NgramModel):
     ''' An n-gram model with interpolation '''
 
     def __init__(self, c, k):
-        self.__context = c
-        self.__k = k
-        self.__vocab = set()
-        self.__ngrams = {}
+        super().__init__(c, k)
+        self.__lambdas = []
+        for i in range(c + 1):
+            self.__lambdas.append(1/(c + 1))
 
-    def set_k(self, k:int):
-        self.__k = k
-
-    def get_vocab(self):
+    def set_lambda(self, value):
         pass
 
     def update(self, text):
-        ngram_list = ngrams(self.__context, text)
+        all_order_ngrams = []
+
         for char in text:
-            if char not in self.__vocab:
-                self.__vocab.update(char)
-        for n_gram in ngram_list:
-            if n_gram in self.__ngrams:
-                self.__ngrams[n_gram] += 1
-            else:
-                self.__ngrams[n_gram] = 1
-        for n_gram in self.__ngrams:
-            self.__ngrams[n_gram] += self.__k
-        self.__vocab.add(self.__k)
+            if char not in super().get_vocab():
+                self._NgramModel__vocab.update(char)
+
+        for i in range(self._NgramModel__c):
+            n_grams = ngrams(i, text)
+            all_order_ngrams.append(n_grams)
+
+        for n_grams in all_order_ngrams:
+            for n_gram in n_grams:
+                if n_gram in self._NgramModel__ngrams:
+                    self._NgramModel__ngrams[n_gram] += 1
+                else:
+                    self._NgramModel__ngrams[n_gram] = 1
 
     def prob(self, context, char):
-        pass
+        probability = 0
+        for i in range(self._NgramModel__c):
+            prob = super().prob(context[len(context) - i:], char) * self.__lambdas[i]
+            probability += prob
+        return probability
 
 
 ################################################################################
@@ -193,19 +191,24 @@ class NgramModelWithInterpolation(NgramModel):
 
 
 if __name__ == "__main__":
-    m = NgramModel(1, 0)
-    m.update('abab')
+    #m = NgramModel(1, 0)
+    #m.update('abab')
     #print(m.get_vocab())
-    m.update('abcd')
+    #m.update('abcd')
     #print(m.get_vocab())
     #print(m.prob('a', 'b'))
+    #m.set_k(.15)
+    #print(m.prob('a','a'))
     #print(m.prob('~', 'c'))
     #print(m.prob('b', 'c'))
     #random.seed(1)
     #print([m.random_char('') for i in range(25)])
     #print(m.random_text(25))
     #n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 3)
-    print(m.perplexity('abcda'))
+    #print(m.perplexity('abcda'))
     #print(n.random_text(250))
-
     #print(m.perplexity('abcd'))
+
+    a = NgramModelWithInterpolation(1, 0)
+    a.update('abab')
+    print(a.prob('a', 'a'))
