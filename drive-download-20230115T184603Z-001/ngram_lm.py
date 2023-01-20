@@ -121,6 +121,7 @@ class NgramModel(object):
         for i in range(length):
             updated_context = probable_string[-self.__c:]
             probable_string += self.random_char(updated_context)
+            print(probable_string)
         return probable_string[self.__c:]
 
     def perplexity(self, text):
@@ -210,11 +211,11 @@ def NgramModel_tests():
     shakespeare = create_ngram_model(NgramModel, 'shakespeare_input.txt', 4)
     sonnets = create_ngram_model(NgramModel, 'shakespeare_sonnets.txt', 4)
     nyt = create_ngram_model(NgramModel, 'nytimes_article.txt', 4)
-    print("shakes perp: ",shakespeare.perplexity('shakespeare_input.txt'))
-    print("sonnets perp: ", shakespeare.perplexity('shakespeare_sonnets.txt')) #shakes to sonnets
-    print("nyt perp: ", shakespeare.perplexity('nytimes_article.txt')) # shakes to nyt
-    print(m.perplexity('abcd'), '(expected: 1.189207115002721)')
-    #print(n.random_text(250))
+    #print("shakes perp: ",shakespeare.perplexity('shakespeare_input.txt'))
+    #print("sonnets perp: ", shakespeare.perplexity('shakespeare_sonnets.txt')) #s hakes to sonnets
+    #print("nyt perp: ", shakespeare.perplexity('nytimes_article.txt')) # shakes to nyt
+    #print(m.perplexity('abcd'), '(expected: 1.189207115002721)')
+    print(shakespeare.random_text(300))
     print(m.perplexity('abcda'), '(expected: 1.515716566510398)')
     print(m.perplexity('the quick brown fox jumped over the lazy sleeping dog'))
 
@@ -233,8 +234,12 @@ def NgramModelWithInterpolation_tests():
     print(a.prob('~a', 'b'), '(expected: 0.4682539682539682)')
     print(a.prob('~c', 'd'), '(expected: 0.27222222222222225)')
 
-def CitiesNgrams_tests():
-    #COUNTRY_CODES = ['af', 'cn', 'de', 'fi', 'fr', 'in', 'ir', 'pk', 'za']
+def CitiesNgrams_tests(validation_text): #calidation_text is a str or file
+    COUNTRY_CODES = ['af', 'cn', 'de', 'fi', 'fr', 'in', 'ir', 'pk', 'za']
+    '''
+    we have to train all of the models individually, then go through each model
+     and check the probabilities for the new city, then pick the one with the biggest probability(accuracy)
+    '''
     af = create_ngram_model(NgramModel, 'af.txt', 3)
     cn = create_ngram_model(NgramModel, 'cn.txt', 3)
     de = create_ngram_model(NgramModel, 'de.txt', 3)
@@ -245,13 +250,25 @@ def CitiesNgrams_tests():
     pk = create_ngram_model(NgramModel, 'pk.txt', 3)
     za = create_ngram_model(NgramModel, 'za.txt', 3)
 
-    country_language_models = [af, cn, de, fi, fr, ind, ir, pk, za]
+    country_and_model = {'Africa' : af, 'China': cn, 'Germany': de, 'Finland': fi, 'France': fr, 'India': ind,
+    'Iran': ir, 'Pakistan': pk, 'South Africa': za}
 
-    for language in country_language_models:
-        pass
+    #country_validation_texts = ['af_val.txt', 'cn_val.txt', 'de_val.txt', 'fi_val.txt', 'fr_val.txt',
+    #                           'in_val.txt', 'ir_val.txt', 'pk_val.txt', 'za_val.txt']
+
+    highest_prob = 0
+    highest_prob_country = ''
+    for model in country_and_model.keys():
+        prob = country_and_model[model].prob(validation_text, model)
+        if prob > highest_prob:
+            highest_prob += prob
+            highest_prob_country = model
+    return highest_prob_country
+
 
 
 if __name__ == "__main__":
-    NgramModel_tests()
-    NgramModelWithInterpolation_tests()
+    #NgramModel_tests()
+    #NgramModelWithInterpolation_tests()
+    print(CitiesNgrams_tests('in_val.txt'))
 
