@@ -86,14 +86,13 @@ class NgramModel(object):
         if ngram_occurrences_start_with_context != 0:
             if ngram in self.__ngrams:
                 ngram_occurrences = self.__ngrams[ngram]
-            return (ngram_occurrences + self.__k) / (ngram_occurrences_start_with_context + self.__k)
+            return (ngram_occurrences + self.__k) / (ngram_occurrences_start_with_context + self.__k * len(self.__vocab))
         return 1 / len(self.__vocab)
 
     def __get_ngram_count_with_first_context(self, context):
         '''get count of ngrams that start with char '''
         counter = 0
         for ngram, count in self.__ngrams.items():
-            print(ngram[0])
             if ngram[0] == context:
                 counter += count
         return counter
@@ -150,8 +149,8 @@ class NgramModelWithInterpolation(NgramModel):
         for i in range(c+1):
             self.__lambdas.append(1/(c+1))
 
-    def set_lambda(self, value):
-        pass
+    def set_lambda(self, lam_vals):
+        self.__lambda = lam_vals
 
     def update(self, text):
         all_order_ngrams = []
@@ -159,8 +158,6 @@ class NgramModelWithInterpolation(NgramModel):
         for char in text:
             if char not in super().get_vocab():
                 self._NgramModel__vocab.update(char)
-
-        highest_ngram = self._NgramModel__c
 
         for i in range(self._NgramModel__c+1):
             n_grams = ngrams(i, text)
@@ -176,7 +173,6 @@ class NgramModelWithInterpolation(NgramModel):
     def prob(self, context, char):
         probability = 0
         for i in range(self._NgramModel__c+1):
-            print(super().prob(context[len(context) - i:], char))
             prob1 = super().prob(context[len(context) - i:], char)
             prob = prob1 * self.__lambdas[i]
             probability += prob
@@ -216,4 +212,4 @@ if __name__ == "__main__":
     a.update('abab')
     a.update('abcd')
     print(a.prob('~a', 'b'))
-    # print(a.prob('~c', 'd'))
+    print(a.prob('~c', 'd'))
