@@ -110,58 +110,37 @@ class NgramModel(object):
 
     def random_char(self, context):
         ''' Returns a random character based on the given context and the 
-            n-grams learned by this model
-            sorted_vocab = sorted(self.__vocab)
-        random_num = random.random()
+            n-grams learned by this model'''
+        sorted_vocab = sorted(self.__vocab)
+        random_float = random.random()
         probability = 0
         for char in sorted_vocab:
-            if probability <= random_num:
+            if probability <= random_float:
                 probability += self.prob(context, char)
-            if probability > random_num:
+            if probability > random_float:
                 return char
-            '''
-        sorted_vocab = sorted(self.__vocab)
-        random_num = random.random()
-        probability = 0
-        i = 0
-        while probability < random_num and i < len(sorted_vocab):
-            probability += self.prob(context, sorted_vocab[i])
-            i += 1
-        return sorted_vocab[i - 1]
 
     def random_text(self, length):
         ''' Returns text of the specified character length based on the
             n-grams learned by this model '''
-        #probable_string = ""
-        #starting_context = start_pad(self.__context)
-        #while len(probable_string) < length:
-            #if len(probable_string) == 0:
-                #char = self.random_char(starting_context)
-                #probable_string += char
-            #else:
-                #updated_context = probable_string[-self.__context]
-                #char = self.random_char(updated_context)
-                #probable_string += char
-        #return probable_string
         probable_string = start_pad(self.__context)
         for i in range(length):
-            probable_string += str(self.random_char(probable_string[len(probable_string) - self.__context:]))
-        return probable_string
-
-
+            updated_context = probable_string[-self.__context:]
+            probable_string += self.random_char(updated_context)
+        return probable_string[self.__context:]
 
     def perplexity(self, text):
         ''' Returns the perplexity of text based on the n-grams learned by
             this model '''
-        cross_entropy = 0
-        for i in text:
-            prob = self.prob(self.__context, text[i])
-            cross_entropy -= math.log2(prob)
+        ngram_list = ngrams(self.__context, text)
+        probability = 0
+        for ngram in ngram_list:
+            prob = self.prob(ngram[0], ngram[1])
+            if prob == 0:
+                return float('inf')
+            probability += math.log(prob)
+        return math.exp(-(1 / len(text)) * probability)
 
-        perplexity = math.exp(cross_entropy / len(ngrams))
-        return perplexity
-
-    #iterates through the ngrams, searches ngrams[i][-1] to see if
 
 
 ################################################################################
@@ -217,14 +196,16 @@ if __name__ == "__main__":
     m = NgramModel(1, 0)
     m.update('abab')
     #print(m.get_vocab())
-    #m.update('abcd')
+    m.update('abcd')
     #print(m.get_vocab())
     #print(m.prob('a', 'b'))
     #print(m.prob('~', 'c'))
     #print(m.prob('b', 'c'))
-    random.seed(1)
-    print([m.random_char('') for i in range(25)])
-    print(m.random_text(25))
-    n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 4)
-    print(n.random_text(250))
+    #random.seed(1)
+    #print([m.random_char('') for i in range(25)])
+    #print(m.random_text(25))
+    #n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 3)
+    print(m.perplexity('abcda'))
+    #print(n.random_text(250))
+
     #print(m.perplexity('abcd'))
