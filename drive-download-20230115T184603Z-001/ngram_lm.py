@@ -89,16 +89,17 @@ class NgramModel(object):
             return (ngram_occurrences + self.__k) / (ngram_occurrences_start_with_context + self.__k)
         return 1 / len(self.__vocab)
 
-    def set_k(self, k):
-        self.__k = k
-
     def __get_ngram_count_with_first_context(self, context):
         '''get count of ngrams that start with char '''
         counter = 0
         for ngram, count in self.__ngrams.items():
+            print(ngram[0])
             if ngram[0] == context:
                 counter += count
         return counter
+
+    def set_k(self, k):
+        self.__k = k
 
     def random_char(self, context):
         ''' Returns a random character based on the given context and the 
@@ -146,8 +147,8 @@ class NgramModelWithInterpolation(NgramModel):
     def __init__(self, c, k):
         super().__init__(c, k)
         self.__lambdas = []
-        for i in range(c + 1):
-            self.__lambdas.append(1/(c + 1))
+        for i in range(c+1):
+            self.__lambdas.append(1/(c+1))
 
     def set_lambda(self, value):
         pass
@@ -159,7 +160,9 @@ class NgramModelWithInterpolation(NgramModel):
             if char not in super().get_vocab():
                 self._NgramModel__vocab.update(char)
 
-        for i in range(self._NgramModel__c):
+        highest_ngram = self._NgramModel__c
+
+        for i in range(self._NgramModel__c+1):
             n_grams = ngrams(i, text)
             all_order_ngrams.append(n_grams)
 
@@ -172,11 +175,12 @@ class NgramModelWithInterpolation(NgramModel):
 
     def prob(self, context, char):
         probability = 0
-        for i in range(self._NgramModel__c):
-            prob = super().prob(context[len(context) - i:], char) * self.__lambdas[i]
+        for i in range(self._NgramModel__c+1):
+            print(super().prob(context[len(context) - i:], char))
+            prob1 = super().prob(context[len(context) - i:], char)
+            prob = prob1 * self.__lambdas[i]
             probability += prob
         return probability
-
 
 ################################################################################
 # Your N-Gram Model Experimentations
@@ -191,16 +195,15 @@ class NgramModelWithInterpolation(NgramModel):
 
 
 if __name__ == "__main__":
-    #m = NgramModel(1, 0)
-    #m.update('abab')
+    m = NgramModel(1, 0)
+    m.update('abab')
     #print(m.get_vocab())
-    #m.update('abcd')
+    m.update('abcd')
     #print(m.get_vocab())
-    #print(m.prob('a', 'b'))
+    # print(m.prob('a', 'b'))
     #m.set_k(.15)
-    #print(m.prob('a','a'))
-    #print(m.prob('~', 'c'))
-    #print(m.prob('b', 'c'))
+    # print(m.prob('~', 'c'))
+    # print(m.prob('b', 'c'))
     #random.seed(1)
     #print([m.random_char('') for i in range(25)])
     #print(m.random_text(25))
@@ -209,6 +212,8 @@ if __name__ == "__main__":
     #print(n.random_text(250))
     #print(m.perplexity('abcd'))
 
-    a = NgramModelWithInterpolation(1, 0)
+    a = NgramModelWithInterpolation(2, 1)
     a.update('abab')
-    print(a.prob('a', 'a'))
+    a.update('abcd')
+    print(a.prob('~a', 'b'))
+    # print(a.prob('~c', 'd'))
