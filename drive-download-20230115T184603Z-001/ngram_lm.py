@@ -1,9 +1,10 @@
 import math, random
-
-
-# Hope Crisafi
-# Natural Language Processing Project 1
-# n-gram models
+'''
+Hope Crisafi
+Natural Language Processing
+Project 1: N-gram Language Model
+Last Updated: Jan 20, 2023
+'''
 
 ################################################################################
 # Utility Functions
@@ -63,11 +64,11 @@ class NgramModel(object):
         self.__vocab = set()
         self.__ngrams = {}
 
-    def get_vocab(self) -> set:
+    def get_vocab(self):
         ''' Returns the set of characters in the vocab '''
         return self.__vocab
 
-    def update(self, text: str):
+    def update(self, text):
         ''' Updates the model n-grams based on text'''
         for char in text:
             self.__vocab.update(char)
@@ -98,6 +99,7 @@ class NgramModel(object):
         return counter
 
     def set_k(self, k):
+        '''Set the value of k for smoothing'''
         self.__k = k
 
     def random_char(self, context):
@@ -150,9 +152,11 @@ class NgramModelWithInterpolation(NgramModel):
             self.__lambdas.append(1/(c+1))
 
     def set_lambda(self, lam_vals):
+        ''' sets the lambda values '''
         self.__lambda = lam_vals
 
     def update(self, text):
+        ''' Updates the model n-grams based on text '''
         all_order_ngrams = []
 
         for char in text:
@@ -171,6 +175,7 @@ class NgramModelWithInterpolation(NgramModel):
                     self._NgramModel__ngrams[n_gram] = 1
 
     def prob(self, context, char):
+        ''' Returns the probability of char appearing after context '''
         probability = 0
         for i in range(self._NgramModel__c+1):
             prob1 = super().prob(context[len(context) - i:], char)
@@ -181,35 +186,68 @@ class NgramModelWithInterpolation(NgramModel):
 ################################################################################
 # Your N-Gram Model Experimentations
 ################################################################################
-
-# Add all code you need for testing your language model as you are
-# developing it as well as your code for running your experiments
-# here.
-#
-# Hint: it may be useful to encapsulate it into multiple functions so
-# that you can easily run any test or experiment at any time.
-
-
-if __name__ == "__main__":
+def NgramModel_tests():
+    ''' NgramModel class tests '''
+    print("----Runnin NgramModel tests----")
     m = NgramModel(1, 0)
     m.update('abab')
-    #print(m.get_vocab())
+    print(m.get_vocab(), '(expected: {’b’, ’a’})')
     m.update('abcd')
-    #print(m.get_vocab())
-    # print(m.prob('a', 'b'))
+    print(m.get_vocab(), '(expected: {’b’, ’a’, ’c’, ’d’}')
+    print('WITHOUT INTERP')
+    print(m.prob('a', 'a'), '(expected: 1.0)')
+    print(m.prob('a', 'b'), '(expected: 1.0)')
     #m.set_k(.15)
-    # print(m.prob('~', 'c'))
-    # print(m.prob('b', 'c'))
-    #random.seed(1)
-    #print([m.random_char('') for i in range(25)])
-    #print(m.random_text(25))
-    #n = create_ngram_model(NgramModel, 'shakespeare_input.txt', 3)
-    #print(m.perplexity('abcda'))
+    print(m.prob('~', 'c'), '(expected: 0.0)')
+    print(m.prob('b', 'c'), '(expected: 0.5)')
+    random.seed(1)
+    print([m.random_char('') for i in range(25)])
+    print(m.random_text(25))
+    shakespeare = create_ngram_model(NgramModel, 'shakespeare_input.txt', 4)
+    sonnets = create_ngram_model(NgramModel, 'shakespeare_sonnets.txt', 4)
+    nyt = create_ngram_model(NgramModel, 'nytimes_article.txt', 4)
+    print("shakes perp: ",n.perplexity('shakespeare_input.txt'))
+    print("sonnets perp: ", shakespeare.perplexity('shakespeare_sonnets.txt')) #shakes to sonnets
+    print("nyt perp: ", n.perplexity('nytimes_article.txt')) # shakes to nyt
+    print(m.perplexity('abcd'), '(expected: 1.189207115002721)')
     #print(n.random_text(250))
-    #print(m.perplexity('abcd'))
+    print(m.perplexity('abcda'), '(expected: 1.515716566510398)')
+    print(m.perplexity('the quick brown fox jumped over the lazy sleeping dog'))
 
+def NgramModelWithInterpolation_tests():
+    ''' NgramModelWithInterpolation class tests '''
+    print("----Runnin NgramModelWithInterpolation tests----")
+    m = NgramModelWithInterpolation(1, 0)
+    m.update('abab')
+    print('WITH INTERP')
+    m.set_lambda(.33)
+    print(m.prob('a','a'), '(expected: 0.25)')
+    print(m.prob('a', 'b'), '(expected: 0.75)')
     a = NgramModelWithInterpolation(2, 1)
     a.update('abab')
     a.update('abcd')
-    print(a.prob('~a', 'b'))
-    print(a.prob('~c', 'd'))
+    print(a.prob('~a', 'b'), '(expected: 0.4682539682539682)')
+    print(a.prob('~c', 'd'), '(expected: 0.27222222222222225)')
+
+def CitiesNgrams_tests():
+    #COUNTRY_CODES = ['af', 'cn', 'de', 'fi', 'fr', 'in', 'ir', 'pk', 'za']
+    af = create_ngram_model(NgramModel, 'af.txt', 3)
+    cn = create_ngram_model(NgramModel, 'cn.txt', 3)
+    de = create_ngram_model(NgramModel, 'de.txt', 3)
+    fi = create_ngram_model(NgramModel, 'fi.txt', 3)
+    fr = create_ngram_model(NgramModel, 'fr.txt', 3)
+    ind = create_ngram_model(NgramModel, 'in.txt', 3)
+    ir = create_ngram_model(NgramModel, 'ir.txt', 3)
+    pk = create_ngram_model(NgramModel, 'pk.txt', 3)
+    za = create_ngram_model(NgramModel, 'za.txt', 3)
+
+    country_language_models = [af, cn, de, fi, fr, ind, ir, pk, za]
+
+    for language in country_language_models:
+        pass
+
+
+if __name__ == "__main__":
+    NgramModel_tests()
+    NgramModelWithInterpolation_tests()
+
