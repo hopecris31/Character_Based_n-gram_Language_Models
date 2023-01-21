@@ -1,4 +1,5 @@
 import math, random
+
 '''
 Hope Crisafi
 Natural Language Processing
@@ -25,7 +26,7 @@ def ngrams(c, text):
     ngrams = []
     text = start_pad(c) + text
     for i in range(c, len(text)):
-        context = text[i-c:i]
+        context = text[i - c:i]
         char = text[i]
         ngrams.append((context, char))
     return ngrams
@@ -87,7 +88,8 @@ class NgramModel(object):
         if ngram_occurrences_start_with_context != 0:
             if ngram in self.__ngrams:
                 ngram_occurrences = self.__ngrams[ngram]
-            return (ngram_occurrences + self.__k) / (ngram_occurrences_start_with_context + self.__k * len(self.__vocab))
+            return (ngram_occurrences + self.__k) / (
+                        ngram_occurrences_start_with_context + self.__k * len(self.__vocab))
         return 1 / len(self.__vocab)
 
     def __get_ngram_count_with_first_context(self, context):
@@ -121,7 +123,6 @@ class NgramModel(object):
         for i in range(length):
             updated_context = probable_string[-self.__c:]
             probable_string += self.random_char(updated_context)
-            print(probable_string)
         return probable_string[self.__c:]
 
     def perplexity(self, text):
@@ -137,6 +138,16 @@ class NgramModel(object):
         perplexity = math.exp(-(1 / len(text)) * total_probability)
         return perplexity
 
+    def probable_city(self, text):
+        ngrams_list = ngrams(self.__c, text)
+        most_probable = 0
+        for ngram in ngrams_list:
+            prob = self.prob(ngram[0], ngram[1])
+            if prob > 0:
+                most_probable += math.log(prob)
+            else:
+                return float('inf')
+        return most_probable
 
 
 ################################################################################
@@ -149,8 +160,8 @@ class NgramModelWithInterpolation(NgramModel):
     def __init__(self, c, k):
         super().__init__(c, k)
         self.__lambdas = []
-        for i in range(c+1):
-            self.__lambdas.append(1/(c+1))
+        for i in range(c + 1):
+            self.__lambdas.append(1 / (c + 1))
 
     def set_lambda(self, lam_vals):
         ''' sets the lambda values '''
@@ -164,7 +175,7 @@ class NgramModelWithInterpolation(NgramModel):
             if char not in super().get_vocab():
                 self._NgramModel__vocab.update(char)
 
-        for i in range(self._NgramModel__c+1):
+        for i in range(self._NgramModel__c + 1):
             n_grams = ngrams(i, text)
             all_order_ngrams.append(n_grams)
 
@@ -178,18 +189,19 @@ class NgramModelWithInterpolation(NgramModel):
     def prob(self, context, char):
         ''' Returns the probability of char appearing after context '''
         probability = 0
-        for i in range(self._NgramModel__c+1):
+        for i in range(self._NgramModel__c + 1):
             prob1 = super().prob(context[len(context) - i:], char)
             prob = prob1 * self.__lambdas[i]
             probability += prob
         return probability
+
 
 ################################################################################
 # Your N-Gram Model Experimentations
 ################################################################################
 def NgramModel_tests():
     ''' NgramModel class tests '''
-    print("----Runnin NgramModel tests----")
+    print("----Running NgramModel tests----")
     m = NgramModel(1, 0)
     m.update('abab')
     print(m.get_vocab(), '(expected: {’b’, ’a’})')
@@ -202,31 +214,36 @@ def NgramModel_tests():
     print(m.prob('a', 'b'))
     print(m.prob('a', 'a'))
     print('-----after k -----')
-    m.set_k(.15)
     print(m.prob('a', 'b'))
     print(m.prob('a', 'a'))
     random.seed(1)
     print([m.random_char('') for i in range(25)])
     print(m.random_text(25))
+
+    print('---Perplexity---')
     shakespeare = create_ngram_model(NgramModel, 'shakespeare_input.txt', 4)
-    sonnets = create_ngram_model(NgramModel, 'shakespeare_sonnets.txt', 4)
-    nyt = create_ngram_model(NgramModel, 'nytimes_article.txt', 4)
-    #print("shakes perp: ",shakespeare.perplexity('shakespeare_input.txt'))
-    #print("sonnets perp: ", shakespeare.perplexity('shakespeare_sonnets.txt')) #s hakes to sonnets
-    #print("nyt perp: ", shakespeare.perplexity('nytimes_article.txt')) # shakes to nyt
-    #print(m.perplexity('abcd'), '(expected: 1.189207115002721)')
+    shakespeare.set_k(0)
+    print("shakes perp to shakes: ", shakespeare.perplexity('shakespeare_input.txt'))
+    print("shakes perp to sonnets: ", shakespeare.perplexity('shakespeare_sonnets.txt'))
+    print("shakes perp to nyt: ", shakespeare.perplexity('nytimes_article.txt'))
+    shakespeare.set_k(5)
+    print("shakes perp to shakes: ", shakespeare.perplexity('shakespeare_input.txt'))
+    print("shakes perp to sonnets: ", shakespeare.perplexity('shakespeare_sonnets.txt'))
+    print("shakes perp to nyt: ", shakespeare.perplexity('nytimes_article.txt'))
+    print('---Text Prediction---')
+    print(shakespeare.prob("First", "Character"))
     print(shakespeare.random_text(300))
-    print(m.perplexity('abcda'), '(expected: 1.515716566510398)')
+    print(m.perplexity('shakespeare_input.txt'), '(expected: 1.515716566510398)')
     print(m.perplexity('the quick brown fox jumped over the lazy sleeping dog'))
+
 
 def NgramModelWithInterpolation_tests():
     ''' NgramModelWithInterpolation class tests '''
-    print("----Runnin NgramModelWithInterpolation tests----")
+    print("----Running NgramModelWithInterpolation tests----")
     m = NgramModelWithInterpolation(1, 0)
     m.update('abab')
     print('WITH INTERP')
-    m.set_lambda(.33)
-    print(m.prob('a','a'), '(expected: 0.25)')
+    print(m.prob('a', 'a'), '(expected: 0.25)')
     print(m.prob('a', 'b'), '(expected: 0.75)')
     a = NgramModelWithInterpolation(2, 1)
     a.update('abab')
@@ -234,41 +251,59 @@ def NgramModelWithInterpolation_tests():
     print(a.prob('~a', 'b'), '(expected: 0.4682539682539682)')
     print(a.prob('~c', 'd'), '(expected: 0.27222222222222225)')
 
-def CitiesNgrams_tests(validation_text): #calidation_text is a str or file
-    COUNTRY_CODES = ['af', 'cn', 'de', 'fi', 'fr', 'in', 'ir', 'pk', 'za']
-    '''
-    we have to train all of the models individually, then go through each model
-     and check the probabilities for the new city, then pick the one with the biggest probability(accuracy)
-    '''
-    af = create_ngram_model(NgramModel, 'af.txt', 3)
-    cn = create_ngram_model(NgramModel, 'cn.txt', 3)
-    de = create_ngram_model(NgramModel, 'de.txt', 3)
-    fi = create_ngram_model(NgramModel, 'fi.txt', 3)
-    fr = create_ngram_model(NgramModel, 'fr.txt', 3)
-    ind = create_ngram_model(NgramModel, 'in.txt', 3)
-    ir = create_ngram_model(NgramModel, 'ir.txt', 3)
-    pk = create_ngram_model(NgramModel, 'pk.txt', 3)
-    za = create_ngram_model(NgramModel, 'za.txt', 3)
 
-    country_and_model = {'Africa' : af, 'China': cn, 'Germany': de, 'Finland': fi, 'France': fr, 'India': ind,
-    'Iran': ir, 'Pakistan': pk, 'South Africa': za}
+def CitiesNgrams_tests():
+    ''' gets the accuracy of the language model on predicting what country a city is in'''
+    af = create_ngram_model(NgramModel, 'train/af.txt')
+    cn = create_ngram_model(NgramModel, 'train/cn.txt')
+    de = create_ngram_model(NgramModel, 'train/de.txt')
+    fi = create_ngram_model(NgramModel, 'train/fi.txt')
+    fr = create_ngram_model(NgramModel, 'train/fr.txt')
+    ind = create_ngram_model(NgramModel, 'train/in.txt')
+    ir = create_ngram_model(NgramModel, 'train/ir.txt')
+    pk = create_ngram_model(NgramModel, 'train/pk.txt')
+    za = create_ngram_model(NgramModel, 'train/za.txt')
 
-    #country_validation_texts = ['af_val.txt', 'cn_val.txt', 'de_val.txt', 'fi_val.txt', 'fr_val.txt',
-    #                           'in_val.txt', 'ir_val.txt', 'pk_val.txt', 'za_val.txt']
+    model_and_country = {af: 'af', cn: 'cn', de: 'de', fi: 'fi', fr: 'fr', ind: 'in',
+                         ir: 'ir', pk: 'pk', za: 'za'}
 
-    highest_prob = 0
-    highest_prob_country = ''
-    for model in country_and_model.keys():
-        prob = country_and_model[model].prob(validation_text, model)
-        if prob > highest_prob:
-            highest_prob += prob
-            highest_prob_country = model
-    return highest_prob_country
+    validation_files = {'val/af.txt': 'af', 'val/cn.txt': 'cn', 'val/de.txt': 'de', 'val/fi.txt': 'fi',
+                        'val/fr.txt': 'fr', 'val/in.txt': 'in', 'val/ir.txt': 'ir', 'val/pk.txt': 'pk',
+                        'val/za.txt': 'za'}
 
+    validation_accuracy_counts = {'val/af.txt': 0, 'val/cn.txt': 0, 'val/de.txt': 0, 'val/fi.txt': 0,
+                                  'val/fr.txt': 0, 'val/in.txt': 0, 'val/ir.txt': 0, 'val/pk.txt': 0,
+                                  'val/za.txt': 0}
+
+    for text in validation_files:
+        file = open(text, 'r')
+        validation_cities = file.read().splitlines()
+        correct_country = validation_files[text]
+        total_predictions = 0
+        correct_predictions = 0
+        for city in validation_cities:
+            highest_prob = 0
+            total_predictions += 1
+            highest_prob_country = ''
+            for model in model_and_country:
+                prob = model.probable_city(city)
+                if prob != float('inf'):
+                    if highest_prob == 0 or (abs(prob) < abs(highest_prob)):
+                        highest_prob = prob
+                        highest_prob_country = model_and_country[model]
+                elif highest_prob == 0:
+                    highest_prob_country = model_and_country[model]
+            if highest_prob_country == correct_country:
+                correct_predictions += 1
+        validation_accuracy_counts[text] = correct_predictions / total_predictions
+
+    return validation_accuracy_counts
 
 
 if __name__ == "__main__":
+    print('-----------------')
+    print('--RUNNING TESTS--')
+    print('-----------------')
     #NgramModel_tests()
     #NgramModelWithInterpolation_tests()
-    print(CitiesNgrams_tests('in_val.txt'))
-
+    #print(CitiesNgrams_tests())
